@@ -2,6 +2,7 @@
 If you notice any bugs in GPyOpt, please provide a pull request.
 
 # Bug fixes
+- Run `batch_local_penalization` ([BOXVIA](https://github.com/Yamanaka-Lab-TUAT/BOXVIA/tree/main) solved this issue)
 - [#352](https://github.com/SheffieldML/GPyOpt/pull/352)
 
 # End of maintenance for GPyOpt

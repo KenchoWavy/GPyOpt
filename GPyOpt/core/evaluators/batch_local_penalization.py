@@ -1,25 +1,28 @@
 # Copyright (c) 2016, the GPyOpt Authors
 # Licensed under the BSD 3-clause license (see LICENSE.txt)
 
+# This code has been modified by the BOXVIA developers
+# to enable to run BO with LP while avoiding re-evaluation.
+
 from .base import EvaluatorBase
 import scipy
 from ...util.general import samples_multidimensional_uniform
+from ...util.duplicate_manager import DuplicateManager
 import numpy as np
 
 class LocalPenalization(EvaluatorBase):
     """
     Class for the batch method on 'Batch Bayesian optimization via local penalization' (Gonzalez et al., 2016).
-
     :param acquisition: acquisition function to be used to compute the batch.
     :param batch size: the number of elements in the batch.
-
     """
     def __init__(self, acquisition, batch_size):
         super(LocalPenalization, self).__init__(acquisition, batch_size)
         self.acquisition = acquisition
         self.batch_size = batch_size
 
-    def compute_batch(self, duplicate_manager=None, context_manager=None):
+    def compute_batch(self, de_duplication, space, zipped_X, pending_zipped_X, ignored_zipped_X,
+                            duplicate_manager=None, context_manager=None):
         """
         Computes the elements of the batch sequentially by penalizing the acquisition.
         """
@@ -29,8 +32,9 @@ class LocalPenalization(EvaluatorBase):
         self.acquisition.update_batches(None,None,None)
 
         # --- GET first element in the batch
-        X_batch = self.acquisition.optimize()[0]
+        X_batch = self.acquisition.optimize(duplicate_manager=duplicate_manager)[0]
         k=1
+        zipped_X = np.vstack((zipped_X,X_batch))
 
         if self.batch_size >1:
             # ---------- Approximate the constants of the the method
@@ -40,8 +44,13 @@ class LocalPenalization(EvaluatorBase):
         # --- GET the remaining elements
         while k<self.batch_size:
             self.acquisition.update_batches(X_batch,L,Min)
-            new_sample = self.acquisition.optimize()[0]
+            if de_duplication:
+                duplicate_manager = DuplicateManager(space=space, zipped_X=zipped_X, pending_zipped_X=pending_zipped_X, ignored_zipped_X=ignored_zipped_X)
+            else:
+                duplicate_manager = None
+            new_sample = self.acquisition.optimize(duplicate_manager=duplicate_manager)[0]
             X_batch = np.vstack((X_batch,new_sample))
+            zipped_X = np.vstack((zipped_X,new_sample))
             k +=1
 
         # --- Back to the non-penalized acquisition

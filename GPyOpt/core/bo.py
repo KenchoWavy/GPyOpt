@@ -1,26 +1,23 @@
 # Copyright (c) 2016, the GPyOpt Authors
 # Licensed under the BSD 3-clause license (see LICENSE.txt)
 
+# Lines 238-243 have been edited by BOXVIA Developers
+
 import GPyOpt
 import collections
 import numpy as np
 import time
 import csv
-import logging
 
 from ..util.general import best_value, normalize
 from ..util.duplicate_manager import DuplicateManager
 from ..core.errors import InvalidConfigError
 from ..core.task.cost import CostModel
 from ..optimization.acquisition_optimizer import ContextManager
-
-logger = logging.getLogger(__name__)
-
 try:
     from ..plotting.plots_bo import plot_acquisition, plot_convergence
-except ImportError as e:
-    logger.warning("Could not import plotting module: {}".format(e))
-
+except:
+    pass
 
 
 class BO(object):
@@ -238,7 +235,12 @@ class BO(object):
             duplicate_manager = None
 
         ### We zip the value in case there are categorical variables
-        return self.space.zip_inputs(self.evaluator.compute_batch(duplicate_manager=duplicate_manager, context_manager= self.acquisition.optimizer.context_manager))
+        if self.evaluator.__class__.__name__ == 'LocalPenalization':
+            return self.space.zip_inputs(self.evaluator.compute_batch(de_duplication=self.de_duplication,
+                                                                      space=self.space, zipped_X=self.X, pending_zipped_X=pending_zipped_X, ignored_zipped_X=ignored_zipped_X,
+                                                                      duplicate_manager=duplicate_manager, context_manager= self.acquisition.optimizer.context_manager))
+        else:
+            return self.space.zip_inputs(self.evaluator.compute_batch(duplicate_manager=duplicate_manager, context_manager= self.acquisition.optimizer.context_manager))
 
     def _update_model(self, normalization_type='stats'):
         """
