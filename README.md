@@ -1,4 +1,10 @@
- # End of maintenance for GPyOpt
+# This repository is debugged GPyOpt
+If you notice any bugs in GPyOpt, please provide a pull request.
+
+# Bug fixes
+- [#352](https://github.com/SheffieldML/GPyOpt/pull/352)
+
+# End of maintenance for GPyOpt
 
 Dear GPyOpt community!
 
